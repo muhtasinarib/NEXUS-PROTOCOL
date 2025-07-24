@@ -1,6 +1,10 @@
 MythicalDownloadSorter
 
-Project Title: MythicalDownloadSorterDeveloped By: AriiiDate: July 24, 2025Purpose: A Java-based desktop automation tool to organize files in the Downloads folder by type and date, with system tray integration and scheduled execution.Environment: Windows, Java Development Kit (JDK) 17  
+Project Title: MythicalDownloadSorter 
+Developed By: Ariii 
+Date: July 24, 2025
+Purpose: A Java-based desktop automation tool to organize files in the Downloads folder by type and date, with system tray integration and scheduled execution.
+Environment: Windows, Java Development Kit (JDK) 17  
 
 Abstract
 The MythicalDownloadSorter is a Java application designed to automate file organization. It scans the Downloads folder, categorizes files by their extensions (e.g., PDF, Images, Videos), and moves them into a structured hierarchy under Documents/ValhallaDownloads, with subfolders named by the file’s last modified date (e.g., Images/2025-07-24). Unopened folders are moved to a dedicated UnopenedFolders directory. The tool runs automatically on system startup and every 60 minutes via Windows Task Scheduler, and it includes a system tray icon with options to trigger sorting or exit the application. This report details the tool’s objectives, technologies, features, workflow, setup, and future enhancements, while also guiding users through the learning process from basic concepts to mastery.
