@@ -341,37 +341,3 @@ System Tray and AWT
 AWT:
 Creates the system tray icon.
 Practice: Create a tray icon with a custom menu item that prints a message.
-
-
-
-Automation with Task Scheduler
-
-Task Scheduler:
-Automates program execution.
-Practice: Schedule a batch file to run a simple Java program.
-
-
-
-Mastery
-
-Combine Concepts: Build a small project like a file renamer.
-Explore Advanced Topics:
-JavaFX for GUIs.
-Logging with java.util.logging.
-Exception handling improvements.
-
-
-Contribute: Add features to MythicalDownloadSorter (e.g., logging).
-
-
-Final Notes
-
-Start Small: Begin with simple programs, then tackle file handling.
-Practice: Modify fileTypeMap to add new extensions (e.g., .mp4 → Videos).
-Debug: Use System.out.println to trace issues.
-Resources:
-Oracle Java Tutorials: https://docs.oracle.com/javase/tutorial/
-Online courses (e.g., Codecademy, Coursera).
-
-
-Next Project: Try a GUI-based file sorter or a file search tool.
