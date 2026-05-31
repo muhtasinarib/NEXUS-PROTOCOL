@@ -1,0 +1,248 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                String             @id @default(uuid())
+  name              String?
+  email             String?            @unique
+  emailVerified     DateTime?
+  passwordHash      String?
+  image             String?
+  role              String             @default("USER") // USER, ADMIN
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  
+  // Auth relations
+  accounts          Account[]
+  sessions          Session[]
+
+  // Core features
+  playlists         Playlist[]         @relation("UserPlaylists")
+  likes             Like[]
+  listeningHistory  ListeningHistory[]
+  
+  // Social features
+  comments          Comment[]
+  reactions         Reaction[]
+  sentFriendships   Friendship[]       @relation("Sender")
+  receivedFriendships Friendship[]     @relation("Receiver")
+
+  // Analytics
+  analyticsEvents   Analytics[]
+}
+
+model Account {
+  id                 String    @id @default(uuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?   @db.Text
+  access_token       String?   @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?   @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Playlist {
+  id            String          @id @default(uuid())
+  name          String
+  description   String?
+  coverUrl      String?
+  isPublic      Boolean         @default(true)
+  prompt        String?         @db.Text
+  moodTags      String[]        // e.g. ["energetic", "dark", "cyberpunk"]
+  vibe          String?
+  energyLevel   Float           @default(0.5)
+  userId        String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  user          User            @relation("UserPlaylists", fields: [userId], references: [id], onDelete: Cascade)
+  tracks        PlaylistTrack[]
+  comments      Comment[]
+  reactions     Reaction[]
+  recommendations Recommendation[]
+
+  @@index([userId])
+}
+
+model Track {
+  id          String          @id @default(uuid())
+  spotifyId   String?         @unique
+  youtubeId   String?         @unique
+  title       String
+  artist      String
+  album       String?
+  durationMs  Int
+  coverUrl    String?
+  previewUrl  String?
+  danceability Float?
+  energy      Float?
+  valence     Float?
+  tempo       Float?
+  genres      String[]
+  createdAt   DateTime        @default(now())
+
+  playlists   PlaylistTrack[]
+  likes       Like[]
+  history     ListeningHistory[]
+  embeddings  TrackEmbedding?
+
+  @@index([title])
+  @@index([artist])
+}
+
+model PlaylistTrack {
+  id         String   @id @default(uuid())
+  playlistId String
+  trackId    String
+  addedAt    DateTime @default(now())
+  order      Int
+
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  track      Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, trackId])
+  @@index([playlistId])
+  @@index([trackId])
+}
+
+model TrackEmbedding {
+  id        String   @id @default(uuid())
+  trackId   String   @unique
+  vector    Float[]  // Dense float array representation of the track features/semantics
+  createdAt DateTime @default(now())
+
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+}
+
+model Recommendation {
+  id         String   @id @default(uuid())
+  playlistId String
+  score      Float    // Hybrid recommendation similarity score
+  reason     String?  // Why it was recommended
+  createdAt  DateTime @default(now())
+
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  @@index([playlistId])
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  userId    String
+  trackId   String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, trackId])
+  @@index([userId])
+  @@index([trackId])
+}
+
+model ListeningHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  trackId   String
+  playedAt  DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([trackId])
+}
+
+model Comment {
+  id         String   @id @default(uuid())
+  content    String   @db.Text
+  userId     String
+  playlistId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([playlistId])
+}
+
+model Reaction {
+  id         String   @id @default(uuid())
+  type       String   // e.g. "LIKE", "FIRE", "HEART", "ROCK"
+  userId     String
+  playlistId String
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, playlistId, type])
+  @@index([userId])
+  @@index([playlistId])
+}
+
+model Friendship {
+  id         String   @id @default(uuid())
+  senderId   String
+  receiverId String
+  status     String   // PENDING, ACCEPTED, DECLINED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  sender     User     @relation("Sender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("Receiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model Analytics {
+  id        String   @id @default(uuid())
+  userId    String?
+  eventType String   // e.g. "PLAYLIST_GENERATED", "TRACK_LIKED", "TRACK_PLAYED", "LOGIN"
+  metadata  Json?    // Contextual information
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+model FeatureFlag {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+}
